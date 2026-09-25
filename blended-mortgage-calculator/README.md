@@ -1,6 +1,6 @@
 # Blended Mortgage Calculator
 
-Branded for OurHappyValleyHome.com, with the Equal Housing Opportunity logo in the footer (embedded in the page).
+Branded for OurHappyValleyHome.com. The footer carries the eXp Realty logo, agent contact details and the Equal Housing Opportunity logo (both logos embedded in the page). A header button switches between light and dark mode and remembers the choice in the browser.
 
 Single-file calculator (`index.html`, no build step) for purchases where the buyer assumes the seller's first mortgage and covers the equity gap with cash plus a second lien. It compares the blended structure against a new first mortgage at the market rate.
 
