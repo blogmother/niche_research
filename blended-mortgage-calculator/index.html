@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+</head>
+<body>
+<title>Blended Mortgage Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --surface-2:#F8FAFC; --ink:#142033; --ink-2:#4B5870; --muted:#76829A;
+  --line:#DCE2EA; --line-strong:#C3CCD8; --accent:#1F3A5F; --brass:#8C6A24; --focus:#2a78d6;
+  --good:#1E7A4F; --good-bg:#E6F4EC; --bad:#B3402F; --bad-bg:#FBEAE6; --warn:#8A5A00; --warn-bg:#FFF4DB;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --logo-filter:none;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F151E; --surface:#18202B; --surface-2:#1D2633; --ink:#E9EEF5; --ink-2:#B3BDCC; --muted:#8591A3;
+    --line:#2A3544; --line-strong:#3A4658; --accent:#A9C2E4; --brass:#D4AE62; --focus:#6FA8EE;
+    --good:#58C993; --good-bg:#15302A; --bad:#F2846F; --bad-bg:#3A1F1C; --warn:#E8B64E; --warn-bg:#352A12;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --logo-filter:invert(1);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F151E; --surface:#18202B; --surface-2:#1D2633; --ink:#E9EEF5; --ink-2:#B3BDCC; --muted:#8591A3;
+  --line:#2A3544; --line-strong:#3A4658; --accent:#A9C2E4; --brass:#D4AE62; --focus:#6FA8EE;
+  --good:#58C993; --good-bg:#15302A; --bad:#F2846F; --bad-bg:#3A1F1C; --warn:#E8B64E; --warn-bg:#352A12;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --logo-filter:invert(1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:24px}
+header{display:grid;gap:6px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--brass)}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--ink-2);max-width:70ch}
+.layout{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+/* inputs */
+form{display:grid;gap:16px}
+fieldset{margin:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:16px;display:grid;gap:12px;min-width:0}
+legend{font-family:var(--serif);font-weight:600;font-size:17px;padding:0 6px;margin-left:-6px;color:var(--ink)}
+.fs-note{font-size:13px;color:var(--muted);margin:-4px 0 0}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:12px;row-gap:0}
+.row > .field{grid-row:span 3;grid-template-rows:subgrid;row-gap:4px;align-content:start}
+.field > .row{grid-template-rows:auto;row-gap:0}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:13px;font-weight:600;color:var(--ink-2);align-self:end}
+.field .hint{font-size:12px;color:var(--muted)}
+.inp{position:relative;display:flex;align-items:center}
+.inp input,.inp select{width:100%;font:500 15px/1.2 var(--mono);color:var(--ink);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:7px;padding:9px 10px;min-width:0}
+.inp select{font-family:var(--sans)}
+.inp.pre input{padding-left:24px}
+.inp.suf input{padding-right:34px}
+.inp .ad{position:absolute;font:13px var(--mono);color:var(--muted);pointer-events:none}
+.inp.pre .ad{left:10px}
+.inp.suf .ad{right:10px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sample{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:13px}
+.sample[hidden]{display:none!important}
+button{font:600 13px var(--sans);border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+.linkbtn{margin-top:4px;border:none;background:none;padding:2px 0;color:var(--accent);text-align:left;font-weight:600;font-size:12px;text-decoration:underline;text-underline-offset:2px;width:max-content}
+
+/* results */
+.results{display:grid;gap:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:900px){.results{position:static}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+.card h2{font-family:var(--serif);font-weight:600;font-size:18px;margin:0;text-wrap:balance}
+.card .sub{font-size:13px;color:var(--muted);margin:-8px 0 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:560px){.stats{grid-template-columns:minmax(0,1fr)}}
+.stat{background:var(--surface);padding:16px 18px;display:grid;gap:4px;align-content:start}
+.stat .k{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font:500 clamp(24px,3vw,30px)/1.1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat .d{font-size:13px;color:var(--ink-2)}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);padding:3px 8px;border-radius:999px;width:max-content;max-width:100%}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+
+/* capital stack */
+.stack{display:flex;gap:2px;height:40px;border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg{position:relative;min-width:2px;transition:flex-basis .25s ease;cursor:default}
+.seg:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.seg.s1{background:var(--s1)} .seg.s2{background:var(--s2)} .seg.s3{background:var(--s3)}
+.stack-scale{display:flex;justify-content:space-between;font:12px var(--mono);color:var(--muted);margin-top:-8px}
+.tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:var(--bg);font:12px/1.4 var(--sans);padding:7px 9px;border-radius:6px;max-width:240px}
+.tip[hidden]{display:none!important}
+.tip b{font-family:var(--mono);font-weight:500}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:8px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line-strong)}
+td{font-family:var(--mono)}
+td:first-child{font-family:var(--sans);color:var(--ink-2)}
+tr.total td{font-weight:600;color:var(--ink);border-bottom:none;border-top:1px solid var(--line-strong)}
+tr.total td:first-child{color:var(--ink)}
+td.pos{color:var(--good)} td.neg{color:var(--bad)}
+.muted{color:var(--muted)}
+.msgs{display:grid;gap:8px}
+.msg{font-size:13px;border-radius:8px;padding:9px 12px}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.msg.bad{background:var(--bad-bg);color:var(--bad)}
+.notes{font-size:13px;color:var(--ink-2);display:grid;gap:6px;max-width:75ch}
+.notes p{margin:0}
+.horizon{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.horizon .inp{width:90px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.brand a{font-family:var(--serif);font-weight:700;font-size:20px;color:var(--accent);text-decoration:none;letter-spacing:-.005em}
+.brand a span{color:var(--brass)}
+.brand a:hover{text-decoration:underline;text-underline-offset:3px}
+.brand small{font-size:13px;color:var(--muted)}
+.theme-btn{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:6px}
+.theme-btn::before{content:"";width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,var(--ink) 50%,var(--surface) 50%);border:1px solid var(--ink)}
+.site-foot{border-top:1px solid var(--line);padding-top:24px;display:flex;gap:28px 48px;align-items:flex-start;flex-wrap:wrap}
+.site-foot .blk{display:flex;gap:20px;align-items:center;flex-wrap:wrap;min-width:0}
+.site-foot img.exp{width:120px}
+.agent{display:grid;gap:2px;font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.agent strong{font-family:var(--serif);font-size:17px;color:var(--ink)}
+.site-foot img{width:88px;height:auto;filter:var(--logo-filter);flex:none}
+.site-foot .ft{display:grid;gap:4px;font-size:13px;color:var(--ink-2);max-width:52ch;flex:1 1 260px}
+.site-foot .ft strong{font-family:var(--serif);font-size:16px;color:var(--ink)}
+.site-foot a{color:var(--accent)}
+.stats.inset{border-radius:8px}
+.stats.inset .stat{background:var(--surface-2)}
+tr.sub td{font-size:13px;color:var(--muted)}
+tr.sub td:first-child{padding-left:24px}
+@media (prefers-reduced-motion:reduce){.seg{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><a href="https://ourhappyvalleyhome.com" target="_blank" rel="noopener">OurHappyValley<span>Home</span>.com</a><small>State College, PA</small><button type="button" id="themeBtn" class="theme-btn" aria-pressed="false">Dark mode</button></div>
+    <div class="eyebrow">Assumable first lien + gap financing</div>
+    <h1>Blended Mortgage Calculator</h1>
+    <p>Model a purchase where the buyer assumes the seller's existing first mortgage and covers the equity gap with cash plus a second lien. Compare the blended payment against a new loan at today's rate.</p>
+  </header>
+
+  <div class="layout">
+    <form id="f" novalidate>
+      <div class="sample" id="sampleBar">
+        <span>Showing example figures. Replace them with the listing's numbers.</span>
+        <button type="button" id="clearBtn">Clear all</button>
+      </div>
+
+      <fieldset>
+        <legend>Listing</legend>
+        <div class="row">
+          <div class="field"><label for="price">Purchase price</label><div class="inp pre"><span class="ad">$</span><input id="price" inputmode="decimal" type="number" min="0" step="1000" value="425000"></div></div>
+          <div class="field"><label for="down">Buyer cash toward equity</label><div class="inp pre"><span class="ad">$</span><input id="down" inputmode="decimal" type="number" min="0" step="1000" value="40000"></div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Assumable first mortgage</legend>
+        <p class="fs-note">From the listing: rate, balance, and monthly payment. Confirm with the servicer before writing an offer.</p>
+        <div class="row">
+          <div class="field"><label for="type1">Loan type</label><div class="inp"><select id="type1"><option>FHA</option><option>VA</option><option>USDA</option><option>Conventional</option></select></div></div>
+          <div class="field"><label for="rate1">Interest rate</label><div class="inp suf"><input id="rate1" inputmode="decimal" type="number" min="0" step="0.125" value="3.25"><span class="ad">%</span></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="bal1">Unpaid principal balance</label><div class="inp pre"><span class="ad">$</span><input id="bal1" inputmode="decimal" type="number" min="0" step="1000" value="268000"></div></div>
+          <div class="field"><label for="pi1">Listed P&amp;I <span class="muted">(optional)</span></label><div class="inp pre"><span class="ad">$</span><input id="pi1" inputmode="decimal" type="number" min="0" step="1" value="1258"></div><span class="hint" id="pi1Hint">Cross-check against the term</span></div>
+        </div>
+        <div class="field">
+          <label for="n1y">Time left on the loan</label>
+          <div class="row">
+            <div class="inp suf"><input id="n1y" aria-label="Years remaining" inputmode="numeric" type="number" min="0" max="40" step="1" value="26"><span class="ad">yr</span></div>
+            <div class="inp suf"><input id="n1m" aria-label="Additional months remaining" inputmode="numeric" type="number" min="0" max="11" step="1" value="6"><span class="ad">mo</span></div>
+          </div>
+          <span class="hint" id="n1Hint">Payments remaining until payoff. Origination date + original term, or the servicer's statement.</span>
+        </div>
+        <div class="row">
+          <div class="field" id="mipField"><label for="mip1">Annual MIP / MI</label><div class="inp suf"><input id="mip1" inputmode="decimal" type="number" min="0" step="0.05" value="0.55"><span class="ad">%</span></div><span class="hint">Carries over with the loan</span></div>
+          <div></div>
+        </div>
+        <div class="field">
+          <label for="afeeUp">Assumption transaction fee</label>
+          <div class="row">
+            <div class="field"><div class="inp pre"><span class="ad">$</span><input id="afeeUp" aria-label="Assumption transaction fee paid upfront" inputmode="decimal" type="number" min="0" step="50" value="200"></div><span class="hint">Upfront</span></div>
+            <div class="field"><div class="inp pre"><span class="ad">$</span><input id="afeeCtc" aria-label="Assumption transaction fee due at clear to close" inputmode="decimal" type="number" min="0" step="50" value="2100"></div><span class="hint">Due at servicer's Clear to Close</span></div>
+          </div>
+          <span class="hint" id="afeeHint">Total $2,300</span>
+        </div>
+        <div class="row" id="ffRow">
+          <div class="field" id="ffField"><label for="ff">VA funding fee</label><div class="inp suf"><input id="ff" inputmode="decimal" type="number" min="0" step="0.05" value="0.5"><span class="ad">%</span></div><span class="hint">Of assumed balance; confirm exemption status</span></div>
+          <div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Second lien (gap financing)</legend>
+        <p class="fs-note">Covers whatever part of the equity gap the buyer's cash doesn't. Amount is calculated.</p>
+        <div class="row">
+          <div class="field"><label for="rate2">Interest rate</label><div class="inp suf"><input id="rate2" inputmode="decimal" type="number" min="0" step="0.125" value="8.5"><span class="ad">%</span></div></div>
+          <div class="field"><label for="term2">Term</label><div class="inp suf"><input id="term2" inputmode="numeric" type="number" min="1" max="40" step="1" value="25"><span class="ad">yr</span></div><button type="button" id="matchBtn" class="linkbtn">Match first lien</button></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="io2">Interest-only period</label><div class="inp suf"><input id="io2" inputmode="numeric" type="number" min="0" max="15" step="1" value="0"><span class="ad">yr</span></div><span class="hint">0 for fully amortizing</span></div>
+          <div class="field"><label for="cc2">Second-lien closing costs</label><div class="inp pre"><span class="ad">$</span><input id="cc2" inputmode="decimal" type="number" min="0" step="100" value="3500"></div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Carrying costs</legend>
+        <div class="row">
+          <div class="field"><label for="tax">Property taxes</label><div class="inp pre"><span class="ad">$</span><input id="tax" inputmode="decimal" type="number" min="0" step="100" value="6200"></div><span class="hint">Per year</span></div>
+          <div class="field"><label for="ins">Homeowners insurance</label><div class="inp pre"><span class="ad">$</span><input id="ins" inputmode="decimal" type="number" min="0" step="50" value="1500"></div><span class="hint">Per year</span></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="hoa">HOA dues</label><div class="inp pre"><span class="ad">$</span><input id="hoa" inputmode="decimal" type="number" min="0" step="10" value="0"></div><span class="hint">Per month</span></div>
+          <div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Compare: new loan</legend>
+        <p class="fs-note">Same price, same buyer cash, one new first mortgage.</p>
+        <div class="row">
+          <div class="field"><label for="rate3">Market rate</label><div class="inp suf"><input id="rate3" inputmode="decimal" type="number" min="0" step="0.125" value="6.5"><span class="ad">%</span></div></div>
+          <div class="field"><label for="term3">Term</label><div class="inp suf"><input id="term3" inputmode="numeric" type="number" min="1" max="40" step="1" value="30"><span class="ad">yr</span></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="pmi3">PMI above 80% LTV</label><div class="inp suf"><input id="pmi3" inputmode="decimal" type="number" min="0" step="0.05" value="0.5"><span class="ad">%</span></div><span class="hint">Annual, on loan balance</span></div>
+          <div class="field"><label for="cc3">New-loan closing costs</label><div class="inp pre"><span class="ad">$</span><input id="cc3" inputmode="decimal" type="number" min="0" step="100" value="9500"></div></div>
+        </div>
+      </fieldset>
+    </form>
+
+    <section class="results" aria-live="polite">
+      <div class="stats">
+        <div class="stat"><span class="k">Blended rate</span><span class="v" id="oBlend">–</span><span class="d" id="oBlendD"></span></div>
+        <div class="stat"><span class="k">Blended PITI</span><span class="v" id="oPiti">–</span><span class="d" id="oPitiD"></span></div>
+        <div class="stat"><span class="k">vs. new loan</span><span class="v" id="oDiff">–</span><span id="oDiffChip"></span></div>
+      </div>
+
+      <div class="msgs" id="msgs"></div>
+
+      <div class="card">
+        <h2>Capital stack</h2>
+        <p class="sub" id="stackSub"></p>
+        <div class="stack" id="stack" role="img" aria-label="Capital stack">
+          <div class="seg s1" id="seg1" tabindex="0"></div>
+          <div class="seg s2" id="seg2" tabindex="0"></div>
+          <div class="seg s3" id="seg3" tabindex="0"></div>
+        </div>
+        <div class="stack-scale"><span>$0</span><span id="stackMax"></span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Layer</th><th>Amount</th><th>% of price</th><th>Rate</th><th>Term left</th></tr></thead>
+            <tbody id="stackBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Monthly payment</h2>
+        <p class="sub">First payment month. Taxes, insurance and HOA are the same in both columns.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th></tr></thead>
+            <tbody id="payBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Lifetime savings</h2>
+        <p class="sub" id="lifeSub">The assumed loan has fewer than 30 years left, so it pays off sooner and carries less total interest than a new 30-year loan.</p>
+        <div class="stats inset">
+          <div class="stat"><span class="k">Interest saved</span><span class="v" id="lfInt">–</span><span class="d" id="lfIntD"></span></div>
+          <div class="stat"><span class="k">Debt-free</span><span class="v" id="lfSooner">–</span><span class="d" id="lfSoonerD"></span></div>
+          <div class="stat"><span class="k">Total cost saved</span><span class="v" id="lfCost">–</span><span class="d">Interest + insurance + fees</span></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th><th>Difference</th></tr></thead>
+            <tbody id="lifeBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="horizon">
+          <h2>Cost over a holding period</h2>
+          <div class="inp suf"><input id="hz" aria-label="Holding period in years" inputmode="numeric" type="number" min="1" max="40" step="1" value="7"><span class="ad">yr</span></div>
+        </div>
+        <p class="sub">What each structure costs if the buyer sells or refinances at the end of the period. Borrowing cost = interest + mortgage insurance + closing costs.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th><th>Difference</th></tr></thead>
+            <tbody id="hzBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cash to close</h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th></tr></thead>
+            <tbody id="cashBody"></tbody>
+          </table>
+        </div>
+        <div class="notes">
+          <p><strong>How the numbers work.</strong> Blended rate is the balance-weighted average of the two note rates. Cash-flow rate is the monthly yield that equates combined loan proceeds with every scheduled payment on both liens, so it reflects each loan's term. Payment-equivalent rate is the rate a single new loan of the same term would need to produce the same starting P&amp;I on the combined balance.</p>
+          <p><strong>Modeling assumptions.</strong> MIP/MI on the assumed loan is charged monthly on the current balance until payoff. Lifetime figures run every scheduled payment to payoff with no prepayment or refinance. PMI on the new loan drops when the scheduled balance reaches 78% of the purchase price. Prepaids, escrow reserves, lender credits and seller concessions are excluded. Recording, title and transfer taxes are the same for both structures and are left out of cash to close.</p>
+          <p><strong>Estimates only.</strong> Listing-portal rate and balance figures are estimates. Get a payoff/assumption statement from the servicer and a written second-lien quote before relying on these results.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-foot">
+    <div class="blk">
+      <img class="exp" src="data:image/png;base64,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" alt="eXp Realty" width="120" height="62">
+      <div class="agent">
+        <strong>Frances I. Thorsen | REALTOR®</strong>
+        <strong>eXp Realty LLC</strong>
+        <a href="mailto:fran@OurHappyValleyHome.com">fran@OurHappyValleyHome.com</a>
+        <span>License | RS148436A</span>
+        <span>Direct: <a href="tel:+13177825474">317-782-5474</a></span>
+        <span>Office: <a href="tel:+18883977352,1026">888-397-7352</a> ext. 1026</span>
+      </div>
+    </div>
+    <div class="blk">
+      <img src="data:image/png;base64,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" alt="Equal Housing Opportunity" width="88" height="94">
+      <div class="ft">
+        <strong>OurHappyValleyHome.com</strong>
+        <span>Equal Housing Opportunity. Figures are estimates for discussion only, not a loan offer or commitment. Confirm rates, balances, fees and eligibility with the mortgage servicer and lender.</span>
+        <a href="https://ourhappyvalleyhome.com" target="_blank" rel="noopener">ourhappyvalleyhome.com</a>
+      </div>
+    </div>
+  </footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const IDS = ["price","down","type1","rate1","bal1","pi1","n1y","n1m","mip1","afeeUp","afeeCtc","ff","rate2","term2","io2","cc2","tax","ins","hoa","rate3","term3","pmi3","cc3","hz"];
+  const QS = {price:"price",down:"down",type:"type1",rate:"rate1",balance:"bal1",pi:"pi1",years:"n1y",months:"n1m",mip:"mip1",feeUpfront:"afeeUp",feeCtc:"afeeCtc",rate2:"rate2",term2:"term2",market:"rate3",taxes:"tax",ins:"ins",hoa:"hoa"};
+  const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+  const usd = (v, d=0) => (v<0?"−":"") + "$" + Math.abs(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+  const pct = (v, d=3) => isFinite(v) ? v.toFixed(d).replace(/0+$/,"").replace(/\.$/,"") + "%" : "–";
+  const pctFixed = (v, d=2) => isFinite(v) ? v.toFixed(d) + "%" : "–";
+
+  function pmt(L, annual, n){ if (L<=0||n<=0) return 0; const r=annual/1200; return r ? L*r/(1-Math.pow(1+r,-n)) : L/n; }
+  function termFromPayment(B, annual, P){
+    const r=annual/1200; if (B<=0) return 0; if (P<=0) return NaN;
+    if (!r) return B/P; if (P <= B*r) return Infinity;
+    return -Math.log(1 - r*B/P)/Math.log(1+r);
+  }
+  // Month-by-month schedule. Returns arrays of payment, interest, principal, balance-after.
+  function schedule(L, annual, months, ioMonths, maxMonths){
+    const r=annual/1200, out=[]; let bal=L;
+    const amortMonths = Math.max(1, Math.round(months - ioMonths));
+    const amortPay = pmt(L, annual, amortMonths);
+    for (let m=1; m<=maxMonths; m++){
+      if (bal <= 0.005){ out.push({pay:0,int:0,prin:0,bal:0}); continue; }
+      const int = bal*r;
+      let pay = m <= ioMonths ? int : amortPay;
+      let prin = Math.min(pay - int, bal);
+      if (m >= months && bal - prin > 0.005) prin = bal; // final month clears residue
+      pay = int + prin; bal -= prin;
+      out.push({pay, int, prin, bal:Math.max(0,bal)});
+    }
+    return out;
+  }
+  function solveRate(target, fn, lo=0, hi=0.05){ // monthly rate via bisection; fn decreasing in r
+    for (let i=0;i<200;i++){ const mid=(lo+hi)/2; if (fn(mid) > target) lo=mid; else hi=mid; }
+    return (lo+hi)/2;
+  }
+
+  let sampleMode = true;
+  function markEdited(){ if (sampleMode){ sampleMode=false; $("sampleBar").hidden=true; } }
+
+  function calc(){
+    const price=num("price"), down=num("down"), type=$("type1").value;
+    const r1=num("rate1"), B1=num("bal1"), piIn=num("pi1");
+    const nIn = Math.max(0,Math.round(num("n1y")))*12 + Math.max(0,Math.round(num("n1m")));
+    const mip=num("mip1"), afeeUp=num("afeeUp"), afeeCtc=num("afeeCtc"), afee=afeeUp+afeeCtc, ffPct = type==="VA" ? num("ff") : 0;
+    const r2=num("rate2"), t2=Math.max(1,num("term2")), io2=Math.min(num("io2"), t2-1), cc2=num("cc2");
+    const tax=num("tax"), ins=num("ins"), hoa=num("hoa");
+    const r3=num("rate3"), t3=Math.max(1,num("term3")), pmiPct=num("pmi3"), cc3=num("cc3");
+    const hzY=Math.max(1,Math.round(num("hz"))), H=hzY*12;
+
+    $("mipField").hidden = type==="VA";
+    $("ffRow").hidden = type!=="VA";
+    const mipEff = type==="VA" ? 0 : mip;
+
+    const msgs=[];
+    // First lien: remaining term drives amortization; listed P&I is a cross-check
+    const n1 = nIn>0 ? nIn : 360;
+    if (nIn<=0) msgs.push(["warn","Enter the years and months left on the first mortgage. Using 30 years until you do."]);
+    const P1 = pmt(B1, r1, n1);
+    const payoff = new Date(); payoff.setDate(1); payoff.setMonth(payoff.getMonth()+n1);
+    const payoffLbl = payoff.toLocaleDateString("en-US",{month:"short",year:"numeric"});
+    $("n1Hint").textContent = `${n1} payments left · retires about ${payoffLbl} if assumed now`;
+    if (piIn > 0){
+      const implied = termFromPayment(B1, r1, piIn);
+      if (!isFinite(implied)) { msgs.push(["bad","The listed P&I doesn't cover the monthly interest on this balance at this rate. Check the rate, balance and payment."]); $("pi1Hint").textContent = "Doesn't amortize at this rate"; }
+      else {
+        const iy=Math.floor(Math.round(implied)/12), im=Math.round(implied)%12;
+        $("pi1Hint").textContent = `Implies ${iy} yr ${im} mo left · term gives ${usd(P1,2)}`;
+        if (Math.abs(piIn-P1)/P1 > 0.02) msgs.push(["warn",`Listed P&I (${usd(piIn,2)}) and the balance, rate and time left (${usd(P1,2)}) disagree by more than 2%. The listed payment implies ${iy} yr ${im} mo left. The calculator uses the term you entered; confirm with the servicer.`]);
+      }
+    } else $("pi1Hint").textContent = "Blank: payment calculated from the term";
+
+    const gap = Math.max(0, price - B1);
+    if (B1 > price) msgs.push(["bad","The assumable balance exceeds the purchase price. There is no equity gap to finance."]);
+    let cash = down;
+    if (down > gap){ msgs.push(["warn","Buyer cash exceeds the equity gap. The excess can't reduce the assumed balance in this model, so only " + usd(gap) + " is applied."]); cash = gap; }
+    const L2 = Math.max(0, gap - cash);
+    const n2 = t2*12, io2m = Math.max(0,io2)*12;
+
+    const L3 = Math.max(0, price - down);
+    const n3 = t3*12;
+    const cltv = price>0 ? (B1+L2)/price*100 : 0;
+    if (cltv > 90) msgs.push(["warn","Combined LTV is " + pctFixed(cltv,1) + ". Confirm the second-lien program allows this combined LTV."]);
+
+    // Schedules over full life (for cash-flow rate) and horizon
+    const lifeMax = Math.max(n1, n2, 1);
+    const T = Math.max(lifeMax, n3, H);
+    const s1 = schedule(B1, r1, n1, 0, T);
+    const s2 = schedule(L2, r2, n2, io2m, T);
+    const s3 = schedule(L3, r3, n3, 0, T);
+
+    const P2 = s2[0] ? s2[0].pay : 0;
+    const P2post = io2m>0 ? pmt(L2, r2, n2-io2m) : P2;
+    const P3 = pmt(L3, r3, n3);
+
+    // Rates
+    const combined = B1 + L2;
+    const blend = combined>0 ? (B1*r1 + L2*r2)/combined : 0;
+    const flows = s1.map((x,i)=> x.pay + (s2[i]?s2[i].pay:0));
+    const pv = r => flows.reduce((a,c,i)=> a + c/Math.pow(1+r,i+1), 0);
+    const cfRate = combined>0 ? solveRate(combined, pv)*1200 : 0;
+    const eqRate2 = (function(){ let lo=0, hi=0.05; for(let i=0;i<200;i++){ const mid=(lo+hi)/2; const p = mid ? combined*mid/(1-Math.pow(1+mid,-n3)) : combined/n3; if (p < P1+P2) lo=mid; else hi=mid; } return (lo+hi)/2*1200; })();
+
+    const fmtTerm = m => `${Math.floor(m/12)} yr${m%12?" "+(m%12)+" mo":""}`;
+    if (L2>0 && Math.abs(n2-n1) >= 12){
+      const firstEnds = n1 < n2;
+      msgs.push(["warn", firstEnds
+        ? `The first lien retires in ${fmtTerm(n1)}; the second lien runs ${fmtTerm(n2-n1)} longer. Payment then drops to the second lien alone (${usd(pmt(L2,r2,n2-io2m),2)} P&I).`
+        : `The second lien retires in ${fmtTerm(n2)}; the first lien runs ${fmtTerm(n1-n2)} longer. Payment then drops to the first lien alone (${usd(P1,2)} P&I).`]);
+    }
+
+    // Monthly mortgage insurance
+    const mi1 = B1*mipEff/1200;
+    const pmiApplies = price>0 && L3/price > 0.80;
+    const mi3 = pmiApplies ? L3*pmiPct/1200 : 0;
+    const escrow = tax/12 + ins/12;
+
+    const pitiA = P1 + P2 + mi1 + escrow + hoa;
+    const pitiB = P3 + mi3 + escrow + hoa;
+    const diff = pitiB - pitiA;
+
+    // Totals over the first `months` months of each structure
+    function totals(months){
+      const t={intA:0,intB:0,miA:0,miB:0,prinA:0,prinB:0,payA:0,payB:0};
+      for (let m=0;m<months;m++){
+        const a=s1[m], b=s2[m], c=s3[m];
+        t.intA += a.int + b.int; t.prinA += a.prin + b.prin; t.payA += a.pay + b.pay;
+        const balBefore1 = m===0 ? B1 : s1[m-1].bal;
+        t.miA += balBefore1*mipEff/1200;
+        t.intB += c.int; t.prinB += c.prin; t.payB += c.pay;
+        const balBefore3 = m===0 ? L3 : s3[m-1].bal;
+        if (pmiApplies && price>0 && balBefore3 > 0.78*price) t.miB += balBefore3*pmiPct/1200;
+      }
+      return t;
+    }
+    const {intA,intB,miA,miB,prinA,prinB} = totals(H);
+    const life = totals(T);
+    const balA = s1[H-1].bal + s2[H-1].bal, balB = s3[H-1].bal;
+    const ffAmt = B1*ffPct/100;
+    const feesA = afee + ffAmt + cc2, feesB = cc3;
+    const costA = intA + miA + feesA, costB = intB + miB + feesB;
+    const payoffA = Math.max(n1, L2>0 ? n2 : 0), payoffB = L3>0 ? n3 : 0;
+    const lifeCostA = life.intA + life.miA + feesA, lifeCostB = life.intB + life.miB + feesB;
+
+    // ---- render
+    $("msgs").innerHTML = msgs.map(([k,t])=>`<div class="msg ${k}">${t}</div>`).join("");
+    $("oBlend").textContent = pctFixed(blend,3);
+    $("oBlendD").textContent = "Cash-flow rate " + pctFixed(cfRate,3) + " · payment-equivalent " + t3 + "-yr " + pctFixed(eqRate2,3);
+    $("oPiti").textContent = usd(pitiA);
+    $("oPitiD").textContent = "New loan: " + usd(pitiB) + " at " + pct(r3);
+    $("oDiff").textContent = (diff>=0?"":"+") + usd(Math.abs(diff)) + "/mo";
+    $("oDiffChip").innerHTML = Math.abs(diff) < 1 ? `<span class="chip warn">About even</span>` : diff>0
+      ? `<span class="chip good">▼ Lower · ${usd(diff*12)}/yr</span>`
+      : `<span class="chip bad">▲ Higher · ${usd(-diff*12)}/yr</span>`;
+
+    $("afeeHint").textContent = "Total " + usd(afee) + ": " + usd(afeeUp) + " upfront + " + usd(afeeCtc) + " at Clear to Close";
+
+    // lifetime
+    const hrow = (label,a,b,lowerIsBetter=true,cls="") => {
+      const d=b-a; const good = lowerIsBetter ? d>0 : d<0;
+      const dc = Math.abs(d)<1 ? "" : good ? "pos" : "neg";
+      return `<tr class="${cls}"><td>${label}</td><td>${usd(a)}</td><td>${usd(b)}</td><td class="${dc}">${Math.abs(d)<1?"—":(good?"Saves ":"Costs ")+usd(Math.abs(d))}</td></tr>`;
+    };
+    const dateAfter = m => { const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+m); return d.toLocaleDateString("en-US",{month:"short",year:"numeric"}); };
+    const soon = payoffB - payoffA;
+    $("lfInt").textContent = usd(Math.abs(life.intB-life.intA));
+    $("lfIntD").textContent = life.intB>=life.intA ? "Less interest over the life of the loans" : "More interest over the life of the loans";
+    $("lfSooner").textContent = soon===0 ? "Same" : fmtTerm(Math.abs(soon));
+    $("lfSoonerD").textContent = soon>0 ? "sooner · " + dateAfter(payoffA) + " vs " + dateAfter(payoffB) : soon<0 ? "later · " + dateAfter(payoffA) + " vs " + dateAfter(payoffB) : "Both paid off " + dateAfter(payoffA);
+    $("lfCost").textContent = usd(Math.abs(lifeCostB-lifeCostA));
+    $("lifeSub").textContent = (n1 < n3
+      ? `The assumed loan has ${fmtTerm(n1)} left versus a new ${t3}-year term, so it retires ${fmtTerm(n3-n1)} sooner and carries less total interest.`
+      : `The assumed loan has ${fmtTerm(n1)} left, no shorter than a new ${t3}-year term.`)
+      + (L2>0 && n2>n1 ? ` The second lien runs to ${dateAfter(n2)}, which sets the debt-free date; shorten its term to capture the full benefit.` : "");
+    let lf = "";
+    lf += `<tr><td>Debt-free date</td><td>${dateAfter(payoffA)}</td><td>${dateAfter(payoffB)}</td><td class="${soon>0?"pos":soon<0?"neg":""}">${soon===0?"—":fmtTerm(Math.abs(soon))+(soon>0?" sooner":" later")}</td></tr>`;
+    lf += hrow("Total P&amp;I payments", life.payA, life.payB);
+    lf += hrow("Total interest", life.intA, life.intB);
+    lf += hrow("Mortgage insurance", life.miA, life.miB);
+    lf += hrow("Closing costs &amp; fees", feesA, feesB);
+    lf += hrow("Lifetime borrowing cost", lifeCostA, lifeCostB, true, "total");
+    $("lifeBody").innerHTML = lf;
+
+    // stack
+    const layers = [
+      ["s1", type + " first lien (assumed)", B1, r1, n1],
+      ["s2", "Second lien", L2, r2, L2>0?n2:null],
+      ["s3", "Buyer cash", cash, null, null],
+    ];
+    const tot = Math.max(1, B1+L2+cash);
+    layers.forEach(([k,name,amt,rate],i)=>{
+      const el=$("seg"+(i+1)); el.style.flex = "0 0 " + (amt/tot*100) + "%"; el.hidden = amt<=0;
+      el.dataset.tip = `<span class="sw" style="background:var(--${k})"></span>${name}<br><b>${usd(amt)}</b> · ${price>0?pctFixed(amt/price*100,1):"–"} of price${rate!=null?" · "+pct(rate):""}`;
+      el.setAttribute("aria-label", `${name}: ${usd(amt)}`);
+    });
+    $("stackMax").textContent = usd(price);
+    $("stackSub").textContent = "Equity gap " + usd(gap) + " (" + (price>0?pctFixed(gap/price*100,1):"–") + " of price) · CLTV " + pctFixed(cltv,1) + " · first lien retires in " + fmtTerm(n1);
+    const dash = "<span class='muted'>—</span>";
+    $("stackBody").innerHTML = layers.map(([k,name,amt,rate,term])=>
+      `<tr><td><span class="sw" style="background:var(--${k})"></span>${name}</td><td>${usd(amt)}</td><td>${price>0?pctFixed(amt/price*100,1):"–"}</td><td>${rate!=null?pct(rate):dash}</td><td>${term!=null?fmtTerm(term):dash}</td></tr>`).join("")
+      + `<tr class="total"><td>Purchase price</td><td>${usd(price)}</td><td>100.0%</td><td>${pctFixed(blend,3)}<span class="muted"> blended</span></td><td></td></tr>`;
+
+    // payments
+    const row = (label,a,b,cls="") => `<tr class="${cls}"><td>${label}</td><td>${a===null?"<span class='muted'>—</span>":usd(a,2)}</td><td>${b===null?"<span class='muted'>—</span>":usd(b,2)}</td></tr>`;
+    let pay = "";
+    pay += row("First lien P&amp;I", P1, P3);
+    pay += row(`Second lien ${io2m>0?"interest-only":"P&amp;I"}`, P2, null);
+    pay += row(type==="VA"?"Mortgage insurance":`${type==="FHA"?"FHA MIP":type==="USDA"?"USDA annual fee":"MI"}` + " / PMI", mi1, mi3);
+    pay += row("Property taxes", tax/12, tax/12);
+    pay += row("Homeowners insurance", ins/12, ins/12);
+    if (hoa>0) pay += row("HOA dues", hoa, hoa);
+    pay += row("Total monthly", pitiA, pitiB, "total");
+    $("payBody").innerHTML = pay;
+    if (io2m>0) $("payBody").innerHTML += `<tr><td colspan="3" class="muted" style="font-family:var(--sans);white-space:normal">Second-lien payment steps up to ${usd(P2post,2)} after ${io2} yr of interest-only.</td></tr>`;
+
+    // horizon
+    let hz = "";
+    hz += hrow("Interest paid", intA, intB);
+    hz += hrow("Mortgage insurance", miA, miB);
+    hz += hrow("Closing costs &amp; fees", feesA, feesB);
+    hz += hrow(`Borrowing cost, ${hzY} yr`, costA, costB, true, "total");
+    hz += `<tr><td>Principal paid down</td><td>${usd(prinA)}</td><td>${usd(prinB)}</td><td class="muted">equity, not cost</td></tr>`;
+    hz += `<tr><td>Loan balance at year ${hzY}</td><td>${usd(balA)}</td><td>${usd(balB)}</td><td class="muted"></td></tr>`;
+    $("hzBody").innerHTML = hz;
+
+    // cash
+    const crow = (label,a,b,cls="") => `<tr class="${cls}"><td>${label}</td><td>${a===null?"<span class='muted'>—</span>":usd(a)}</td><td>${b===null?"<span class='muted'>—</span>":usd(b)}</td></tr>`;
+    let c = "";
+    c += crow("Down payment / equity", cash, down);
+    c += crow("Assumption transaction fee", afee, null);
+    c += `<tr class="sub"><td>Upfront</td><td>${usd(afeeUp)}</td><td></td></tr>`;
+    c += `<tr class="sub"><td>Due at servicer's Clear to Close</td><td>${usd(afeeCtc)}</td><td></td></tr>`;
+    if (type==="VA") c += crow(`VA funding fee (${pct(ffPct)})`, ffAmt, null);
+    c += crow("Loan closing costs", cc2, cc3);
+    c += crow("Cash to close", cash+afee+ffAmt+cc2, down+cc3, "total");
+    $("cashBody").innerHTML = c;
+    if (down > gap) $("cashBody").innerHTML += `<tr><td colspan="3" class="muted" style="font-family:var(--sans);white-space:normal">New-loan column uses the full ${usd(down)} as down payment.</td></tr>`;
+  }
+
+  // Prefill from query string (standalone use): ?price=425000&rate=3.25&balance=268000&pi=1258&type=FHA
+  try {
+    const q = new URLSearchParams(location.search); let any=false;
+    for (const [k,id] of Object.entries(QS)){ if (q.has(k)){ $(id).value = q.get(k); any=true; } }
+    if (any){ sampleMode=false; $("sampleBar").hidden=true; }
+  } catch(e){}
+
+  IDS.forEach(id => { const el=$(id); el.addEventListener("input", ()=>{ if(id!=="hz") markEdited(); calc(); }); el.addEventListener("change", calc); });
+  $("clearBtn").addEventListener("click", ()=>{
+    ["price","down","rate1","bal1","pi1","n1y","n1m","afeeUp","afeeCtc","tax","ins","hoa","cc2","cc3"].forEach(id=>$(id).value="");
+    $("ff").value = "0.5"; markEdited(); calc(); $("price").focus();
+  });
+  $("f").addEventListener("submit", e=>e.preventDefault());
+  $("matchBtn").addEventListener("click", ()=>{
+    const m = Math.round(num("n1y"))*12 + Math.round(num("n1m"));
+    $("term2").value = Math.max(1, Math.round(m/12)); markEdited(); calc();
+  });
+
+  // tooltip
+  const tip=$("tip");
+  document.querySelectorAll(".seg").forEach(el=>{
+    const show = (x,y) => { tip.innerHTML = el.dataset.tip; tip.hidden=false; const w=tip.offsetWidth; tip.style.left=Math.min(x+12, innerWidth-w-8)+"px"; tip.style.top=(y+14)+"px"; };
+    el.addEventListener("mousemove", e=>show(e.clientX,e.clientY));
+    el.addEventListener("mouseleave", ()=>tip.hidden=true);
+    el.addEventListener("focus", ()=>{ const r=el.getBoundingClientRect(); show(r.left, r.bottom); });
+    el.addEventListener("blur", ()=>tip.hidden=true);
+  });
+
+  // light/dark toggle
+  const root = document.documentElement, mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const current = () => root.getAttribute("data-theme") || (mq.matches ? "dark" : "light");
+  const syncBtn = () => { const d = current()==="dark"; $("themeBtn").textContent = d ? "Light mode" : "Dark mode"; $("themeBtn").setAttribute("aria-pressed", String(d)); };
+  try { const saved = localStorage.getItem("bmc-theme"); if (saved==="dark"||saved==="light") root.setAttribute("data-theme", saved); } catch(e){}
+  $("themeBtn").addEventListener("click", ()=>{
+    const next = current()==="dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("bmc-theme", next); } catch(e){}
+    syncBtn();
+  });
+  mq.addEventListener && mq.addEventListener("change", syncBtn);
+  syncBtn();
+
+  calc();
+})();
+</script>
+</body>
+</html>
