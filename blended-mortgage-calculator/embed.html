@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+<title>Blended Mortgage Calculator</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F8FAFC; --ink:#142033; --ink-2:#4B5870; --muted:#76829A;
+  --line:#DCE2EA; --line-strong:#C3CCD8; --accent:#1F3A5F; --brass:#8C6A24; --focus:#2a78d6;
+  --good:#1E7A4F; --good-bg:#E6F4EC; --bad:#B3402F; --bad-bg:#FBEAE6; --warn:#8A5A00; --warn-bg:#FFF4DB;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --logo-filter:none;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F151E; --surface:#18202B; --surface-2:#1D2633; --ink:#E9EEF5; --ink-2:#B3BDCC; --muted:#8591A3;
+  --line:#2A3544; --line-strong:#3A4658; --accent:#A9C2E4; --brass:#D4AE62; --focus:#6FA8EE;
+  --good:#58C993; --good-bg:#15302A; --bad:#F2846F; --bad-bg:#3A1F1C; --warn:#E8B64E; --warn-bg:#352A12;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --logo-filter:invert(1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:8px 16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:24px}
+header{display:grid;gap:6px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--brass)}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--ink-2);max-width:70ch}
+.layout{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+/* inputs */
+form{display:grid;gap:16px}
+fieldset{margin:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:16px;display:grid;gap:12px;min-width:0}
+legend{font-family:var(--serif);font-weight:600;font-size:17px;padding:0 6px;margin-left:-6px;color:var(--ink)}
+.fs-note{font-size:13px;color:var(--muted);margin:-4px 0 0}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:12px;row-gap:0}
+.row > .field{grid-row:span 3;grid-template-rows:subgrid;row-gap:4px;align-content:start}
+.field > .row{grid-template-rows:auto;row-gap:0}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:13px;font-weight:600;color:var(--ink-2);align-self:end}
+.field .hint{font-size:12px;color:var(--muted)}
+.inp{position:relative;display:flex;align-items:center}
+.inp input,.inp select{width:100%;font:500 15px/1.2 var(--mono);color:var(--ink);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:7px;padding:9px 10px;min-width:0}
+.inp select{font-family:var(--sans)}
+.inp.pre input{padding-left:24px}
+.inp.suf input{padding-right:34px}
+.inp .ad{position:absolute;font:13px var(--mono);color:var(--muted);pointer-events:none}
+.inp.pre .ad{left:10px}
+.inp.suf .ad{right:10px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sample{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:13px}
+.sample[hidden]{display:none!important}
+button{font:600 13px var(--sans);border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+.linkbtn{margin-top:4px;border:none;background:none;padding:2px 0;color:var(--accent);text-align:left;font-weight:600;font-size:12px;text-decoration:underline;text-underline-offset:2px;width:max-content}
+
+/* results */
+.results{display:grid;gap:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:900px){.results{position:static}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+.card h2{font-family:var(--serif);font-weight:600;font-size:18px;margin:0;text-wrap:balance}
+.card .sub{font-size:13px;color:var(--muted);margin:-8px 0 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:560px){.stats{grid-template-columns:minmax(0,1fr)}}
+.stat{background:var(--surface);padding:16px 18px;display:grid;gap:4px;align-content:start}
+.stat .k{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font:500 clamp(24px,3vw,30px)/1.1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat .d{font-size:13px;color:var(--ink-2)}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);padding:3px 8px;border-radius:999px;width:max-content;max-width:100%}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+
+/* capital stack */
+.stack{display:flex;gap:2px;height:40px;border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg{position:relative;min-width:2px;transition:flex-basis .25s ease;cursor:default}
+.seg:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.seg.s1{background:var(--s1)} .seg.s2{background:var(--s2)} .seg.s3{background:var(--s3)}
+.stack-scale{display:flex;justify-content:space-between;font:12px var(--mono);color:var(--muted);margin-top:-8px}
+.tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:var(--bg);font:12px/1.4 var(--sans);padding:7px 9px;border-radius:6px;max-width:240px}
+.tip[hidden]{display:none!important}
+.tip b{font-family:var(--mono);font-weight:500}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:8px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line-strong)}
+td{font-family:var(--mono)}
+td:first-child{font-family:var(--sans);color:var(--ink-2)}
+tr.total td{font-weight:600;color:var(--ink);border-bottom:none;border-top:1px solid var(--line-strong)}
+tr.total td:first-child{color:var(--ink)}
+td.pos{color:var(--good)} td.neg{color:var(--bad)}
+.muted{color:var(--muted)}
+.msgs{display:grid;gap:8px}
+.msg{font-size:13px;border-radius:8px;padding:9px 12px}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.msg.bad{background:var(--bad-bg);color:var(--bad)}
+.notes{font-size:13px;color:var(--ink-2);display:grid;gap:6px;max-width:75ch}
+.notes p{margin:0}
+.horizon{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.horizon .inp{width:90px}
+.stats.inset{border-radius:8px}
+.stats.inset .stat{background:var(--surface-2)}
+.stats.inset .stat .v{font-size:clamp(20px,2.4vw,26px)}
+tr.sub td{font-size:13px;color:var(--muted)}
+tr.sub td:first-child{padding-left:24px}
+@media (prefers-reduced-motion:reduce){.seg{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Assumable first lien + gap financing</div>
+    <h1>Blended Mortgage Calculator</h1>
+    <p>Model a purchase where the buyer assumes the seller's existing first mortgage and covers the equity gap with cash plus a second lien. Compare the blended payment against a new loan at today's rate.</p>
+  </header>
+
+  <div class="layout">
+    <form id="f" novalidate>
+      <div class="sample" id="sampleBar">
+        <span>Showing example figures. Replace them with the listing's numbers.</span>
+        <button type="button" id="clearBtn">Clear all</button>
+      </div>
+
+      <fieldset>
+        <legend>Listing</legend>
+        <div class="row">
+          <div class="field"><label for="price">Purchase price</label><div class="inp pre"><span class="ad">$</span><input id="price" inputmode="decimal" type="number" min="0" step="1000" value="425000"></div></div>
+          <div class="field"><label for="down">Buyer cash toward equity</label><div class="inp pre"><span class="ad">$</span><input id="down" inputmode="decimal" type="number" min="0" step="1000" value="40000"></div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Assumable first mortgage</legend>
+        <p class="fs-note">From the listing: rate, balance, and monthly payment. Confirm with the servicer before writing an offer.</p>
+        <div class="row">
+          <div class="field"><label for="type1">Loan type</label><div class="inp"><select id="type1"><option>FHA</option><option>VA</option><option>USDA</option><option>Conventional</option></select></div></div>
+          <div class="field"><label for="rate1">Interest rate</label><div class="inp suf"><input id="rate1" inputmode="decimal" type="number" min="0" step="0.125" value="3.25"><span class="ad">%</span></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="bal1">Unpaid principal balance</label><div class="inp pre"><span class="ad">$</span><input id="bal1" inputmode="decimal" type="number" min="0" step="1000" value="268000"></div></div>
+          <div class="field"><label for="pi1">Listed P&amp;I <span class="muted">(optional)</span></label><div class="inp pre"><span class="ad">$</span><input id="pi1" inputmode="decimal" type="number" min="0" step="1" value="1258"></div><span class="hint" id="pi1Hint">Cross-check against the term</span></div>
+        </div>
+        <div class="field">
+          <label for="n1y">Time left on the loan</label>
+          <div class="row">
+            <div class="inp suf"><input id="n1y" aria-label="Years remaining" inputmode="numeric" type="number" min="0" max="40" step="1" value="26"><span class="ad">yr</span></div>
+            <div class="inp suf"><input id="n1m" aria-label="Additional months remaining" inputmode="numeric" type="number" min="0" max="11" step="1" value="6"><span class="ad">mo</span></div>
+          </div>
+          <span class="hint" id="n1Hint">Payments remaining until payoff. Origination date + original term, or the servicer's statement.</span>
+        </div>
+        <div class="row">
+          <div class="field" id="mipField"><label for="mip1">Annual MIP / MI</label><div class="inp suf"><input id="mip1" inputmode="decimal" type="number" min="0" step="0.05" value="0.55"><span class="ad">%</span></div><span class="hint">Carries over with the loan</span></div>
+          <div></div>
+        </div>
+        <div class="field">
+          <label for="afeeUp">Assumption transaction fee</label>
+          <div class="row">
+            <div class="field"><div class="inp pre"><span class="ad">$</span><input id="afeeUp" aria-label="Assumption transaction fee paid upfront" inputmode="decimal" type="number" min="0" step="50" value="200"></div><span class="hint">Upfront</span></div>
+            <div class="field"><div class="inp pre"><span class="ad">$</span><input id="afeeCtc" aria-label="Assumption transaction fee due at clear to close" inputmode="decimal" type="number" min="0" step="50" value="2100"></div><span class="hint">Due at servicer's Clear to Close</span></div>
+          </div>
+          <span class="hint" id="afeeHint">Total $2,300</span>
+        </div>
+        <div class="row" id="ffRow">
+          <div class="field" id="ffField"><label for="ff">VA funding fee</label><div class="inp suf"><input id="ff" inputmode="decimal" type="number" min="0" step="0.05" value="0.5"><span class="ad">%</span></div><span class="hint">Of assumed balance; confirm exemption status</span></div>
+          <div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Second lien (gap financing)</legend>
+        <p class="fs-note">Covers whatever part of the equity gap the buyer's cash doesn't. Amount is calculated.</p>
+        <div class="row">
+          <div class="field"><label for="rate2">Interest rate</label><div class="inp suf"><input id="rate2" inputmode="decimal" type="number" min="0" step="0.125" value="8.5"><span class="ad">%</span></div></div>
+          <div class="field"><label for="term2">Term</label><div class="inp suf"><input id="term2" inputmode="numeric" type="number" min="1" max="40" step="1" value="25"><span class="ad">yr</span></div><button type="button" id="matchBtn" class="linkbtn">Match first lien</button></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="io2">Interest-only period</label><div class="inp suf"><input id="io2" inputmode="numeric" type="number" min="0" max="15" step="1" value="0"><span class="ad">yr</span></div><span class="hint">0 for fully amortizing</span></div>
+          <div class="field"><label for="cc2">Second-lien closing costs</label><div class="inp pre"><span class="ad">$</span><input id="cc2" inputmode="decimal" type="number" min="0" step="100" value="3500"></div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Carrying costs</legend>
+        <div class="row">
+          <div class="field"><label for="tax">Property taxes</label><div class="inp pre"><span class="ad">$</span><input id="tax" inputmode="decimal" type="number" min="0" step="100" value="6200"></div><span class="hint">Per year</span></div>
+          <div class="field"><label for="ins">Homeowners insurance</label><div class="inp pre"><span class="ad">$</span><input id="ins" inputmode="decimal" type="number" min="0" step="50" value="1500"></div><span class="hint">Per year</span></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="hoa">HOA dues</label><div class="inp pre"><span class="ad">$</span><input id="hoa" inputmode="decimal" type="number" min="0" step="10" value="0"></div><span class="hint">Per month</span></div>
+          <div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Compare: new loan</legend>
+        <p class="fs-note">Same price, same buyer cash, one new first mortgage.</p>
+        <div class="row">
+          <div class="field"><label for="rate3">Market rate</label><div class="inp suf"><input id="rate3" inputmode="decimal" type="number" min="0" step="0.125" value="6.5"><span class="ad">%</span></div></div>
+          <div class="field"><label for="term3">Term</label><div class="inp suf"><input id="term3" inputmode="numeric" type="number" min="1" max="40" step="1" value="30"><span class="ad">yr</span></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="pmi3">PMI above 80% LTV</label><div class="inp suf"><input id="pmi3" inputmode="decimal" type="number" min="0" step="0.05" value="0.5"><span class="ad">%</span></div><span class="hint">Annual, on loan balance</span></div>
+          <div class="field"><label for="cc3">New-loan closing costs</label><div class="inp pre"><span class="ad">$</span><input id="cc3" inputmode="decimal" type="number" min="0" step="100" value="9500"></div></div>
+        </div>
+      </fieldset>
+    </form>
+
+    <section class="results" aria-live="polite">
+      <div class="stats">
+        <div class="stat"><span class="k">Blended rate</span><span class="v" id="oBlend">–</span><span class="d" id="oBlendD"></span></div>
+        <div class="stat"><span class="k">Blended PITI</span><span class="v" id="oPiti">–</span><span class="d" id="oPitiD"></span></div>
+        <div class="stat"><span class="k">vs. new loan</span><span class="v" id="oDiff">–</span><span id="oDiffChip"></span></div>
+      </div>
+
+      <div class="msgs" id="msgs"></div>
+
+      <div class="card">
+        <h2>Capital stack</h2>
+        <p class="sub" id="stackSub"></p>
+        <div class="stack" id="stack" role="img" aria-label="Capital stack">
+          <div class="seg s1" id="seg1" tabindex="0"></div>
+          <div class="seg s2" id="seg2" tabindex="0"></div>
+          <div class="seg s3" id="seg3" tabindex="0"></div>
+        </div>
+        <div class="stack-scale"><span>$0</span><span id="stackMax"></span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Layer</th><th>Amount</th><th>% of price</th><th>Rate</th><th>Term left</th></tr></thead>
+            <tbody id="stackBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Monthly payment</h2>
+        <p class="sub">First payment month. Taxes, insurance and HOA are the same in both columns.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th></tr></thead>
+            <tbody id="payBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Lifetime savings</h2>
+        <p class="sub" id="lifeSub">The assumed loan has fewer than 30 years left, so it pays off sooner and carries less total interest than a new 30-year loan.</p>
+        <div class="stats inset">
+          <div class="stat"><span class="k">Interest saved</span><span class="v" id="lfInt">–</span><span class="d" id="lfIntD"></span></div>
+          <div class="stat"><span class="k">Debt-free</span><span class="v" id="lfSooner">–</span><span class="d" id="lfSoonerD"></span></div>
+          <div class="stat"><span class="k">Total cost saved</span><span class="v" id="lfCost">–</span><span class="d">Interest + insurance + fees</span></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th><th>Difference</th></tr></thead>
+            <tbody id="lifeBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="horizon">
+          <h2>Cost over a holding period</h2>
+          <div class="inp suf"><input id="hz" aria-label="Holding period in years" inputmode="numeric" type="number" min="1" max="40" step="1" value="7"><span class="ad">yr</span></div>
+        </div>
+        <p class="sub">What each structure costs if the buyer sells or refinances at the end of the period. Borrowing cost = interest + mortgage insurance + closing costs.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th><th>Difference</th></tr></thead>
+            <tbody id="hzBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cash to close</h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Assume + 2nd</th><th>New loan</th></tr></thead>
+            <tbody id="cashBody"></tbody>
+          </table>
+        </div>
+        <div class="notes">
+          <p><strong>How the numbers work.</strong> Blended rate is the balance-weighted average of the two note rates. Cash-flow rate is the monthly yield that equates combined loan proceeds with every scheduled payment on both liens, so it reflects each loan's term. Payment-equivalent rate is the rate a single new loan of the same term would need to produce the same starting P&amp;I on the combined balance.</p>
+          <p><strong>Modeling assumptions.</strong> MIP/MI on the assumed loan is charged monthly on the current balance until payoff. Lifetime figures run every scheduled payment to payoff with no prepayment or refinance. PMI on the new loan drops when the scheduled balance reaches 78% of the purchase price. Prepaids, escrow reserves, lender credits and seller concessions are excluded. Recording, title and transfer taxes are the same for both structures and are left out of cash to close.</p>
+          <p><strong>Estimates only.</strong> Listing-portal rate and balance figures are estimates. Get a payoff/assumption statement from the servicer and a written second-lien quote before relying on these results.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const IDS = ["price","down","type1","rate1","bal1","pi1","n1y","n1m","mip1","afeeUp","afeeCtc","ff","rate2","term2","io2","cc2","tax","ins","hoa","rate3","term3","pmi3","cc3","hz"];
+  const QS = {price:"price",down:"down",type:"type1",rate:"rate1",balance:"bal1",pi:"pi1",years:"n1y",months:"n1m",mip:"mip1",feeUpfront:"afeeUp",feeCtc:"afeeCtc",rate2:"rate2",term2:"term2",market:"rate3",taxes:"tax",ins:"ins",hoa:"hoa"};
+  const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+  const usd = (v, d=0) => (v<0?"−":"") + "$" + Math.abs(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+  const pct = (v, d=3) => isFinite(v) ? v.toFixed(d).replace(/0+$/,"").replace(/\.$/,"") + "%" : "–";
+  const pctFixed = (v, d=2) => isFinite(v) ? v.toFixed(d) + "%" : "–";
+
+  function pmt(L, annual, n){ if (L<=0||n<=0) return 0; const r=annual/1200; return r ? L*r/(1-Math.pow(1+r,-n)) : L/n; }
+  function termFromPayment(B, annual, P){
+    const r=annual/1200; if (B<=0) return 0; if (P<=0) return NaN;
+    if (!r) return B/P; if (P <= B*r) return Infinity;
+    return -Math.log(1 - r*B/P)/Math.log(1+r);
+  }
+  // Month-by-month schedule. Returns arrays of payment, interest, principal, balance-after.
+  function schedule(L, annual, months, ioMonths, maxMonths){
+    const r=annual/1200, out=[]; let bal=L;
+    const amortMonths = Math.max(1, Math.round(months - ioMonths));
+    const amortPay = pmt(L, annual, amortMonths);
+    for (let m=1; m<=maxMonths; m++){
+      if (bal <= 0.005){ out.push({pay:0,int:0,prin:0,bal:0}); continue; }
+      const int = bal*r;
+      let pay = m <= ioMonths ? int : amortPay;
+      let prin = Math.min(pay - int, bal);
+      if (m >= months && bal - prin > 0.005) prin = bal; // final month clears residue
+      pay = int + prin; bal -= prin;
+      out.push({pay, int, prin, bal:Math.max(0,bal)});
+    }
+    return out;
+  }
+  function solveRate(target, fn, lo=0, hi=0.05){ // monthly rate via bisection; fn decreasing in r
+    for (let i=0;i<200;i++){ const mid=(lo+hi)/2; if (fn(mid) > target) lo=mid; else hi=mid; }
+    return (lo+hi)/2;
+  }
+
+  let sampleMode = true;
+  function markEdited(){ if (sampleMode){ sampleMode=false; $("sampleBar").hidden=true; } }
+
+  function calc(){
+    const price=num("price"), down=num("down"), type=$("type1").value;
+    const r1=num("rate1"), B1=num("bal1"), piIn=num("pi1");
+    const nIn = Math.max(0,Math.round(num("n1y")))*12 + Math.max(0,Math.round(num("n1m")));
+    const mip=num("mip1"), afeeUp=num("afeeUp"), afeeCtc=num("afeeCtc"), afee=afeeUp+afeeCtc, ffPct = type==="VA" ? num("ff") : 0;
+    const r2=num("rate2"), t2=Math.max(1,num("term2")), io2=Math.min(num("io2"), t2-1), cc2=num("cc2");
+    const tax=num("tax"), ins=num("ins"), hoa=num("hoa");
+    const r3=num("rate3"), t3=Math.max(1,num("term3")), pmiPct=num("pmi3"), cc3=num("cc3");
+    const hzY=Math.max(1,Math.round(num("hz"))), H=hzY*12;
+
+    $("mipField").hidden = type==="VA";
+    $("ffRow").hidden = type!=="VA";
+    const mipEff = type==="VA" ? 0 : mip;
+
+    const msgs=[];
+    // First lien: remaining term drives amortization; listed P&I is a cross-check
+    const n1 = nIn>0 ? nIn : 360;
+    if (nIn<=0) msgs.push(["warn","Enter the years and months left on the first mortgage. Using 30 years until you do."]);
+    const P1 = pmt(B1, r1, n1);
+    const payoff = new Date(); payoff.setDate(1); payoff.setMonth(payoff.getMonth()+n1);
+    const payoffLbl = payoff.toLocaleDateString("en-US",{month:"short",year:"numeric"});
+    $("n1Hint").textContent = `${n1} payments left · retires about ${payoffLbl} if assumed now`;
+    if (piIn > 0){
+      const implied = termFromPayment(B1, r1, piIn);
+      if (!isFinite(implied)) { msgs.push(["bad","The listed P&I doesn't cover the monthly interest on this balance at this rate. Check the rate, balance and payment."]); $("pi1Hint").textContent = "Doesn't amortize at this rate"; }
+      else {
+        const iy=Math.floor(Math.round(implied)/12), im=Math.round(implied)%12;
+        $("pi1Hint").textContent = `Implies ${iy} yr ${im} mo left · term gives ${usd(P1,2)}`;
+        if (Math.abs(piIn-P1)/P1 > 0.02) msgs.push(["warn",`Listed P&I (${usd(piIn,2)}) and the balance, rate and time left (${usd(P1,2)}) disagree by more than 2%. The listed payment implies ${iy} yr ${im} mo left. The calculator uses the term you entered; confirm with the servicer.`]);
+      }
+    } else $("pi1Hint").textContent = "Blank: payment calculated from the term";
+
+    const gap = Math.max(0, price - B1);
+    if (B1 > price) msgs.push(["bad","The assumable balance exceeds the purchase price. There is no equity gap to finance."]);
+    let cash = down;
+    if (down > gap){ msgs.push(["warn","Buyer cash exceeds the equity gap. The excess can't reduce the assumed balance in this model, so only " + usd(gap) + " is applied."]); cash = gap; }
+    const L2 = Math.max(0, gap - cash);
+    const n2 = t2*12, io2m = Math.max(0,io2)*12;
+
+    const L3 = Math.max(0, price - down);
+    const n3 = t3*12;
+    const cltv = price>0 ? (B1+L2)/price*100 : 0;
+    if (cltv > 90) msgs.push(["warn","Combined LTV is " + pctFixed(cltv,1) + ". Confirm the second-lien program allows this combined LTV."]);
+
+    // Schedules over full life (for cash-flow rate) and horizon
+    const lifeMax = Math.max(n1, n2, 1);
+    const T = Math.max(lifeMax, n3, H);
+    const s1 = schedule(B1, r1, n1, 0, T);
+    const s2 = schedule(L2, r2, n2, io2m, T);
+    const s3 = schedule(L3, r3, n3, 0, T);
+
+    const P2 = s2[0] ? s2[0].pay : 0;
+    const P2post = io2m>0 ? pmt(L2, r2, n2-io2m) : P2;
+    const P3 = pmt(L3, r3, n3);
+
+    // Rates
+    const combined = B1 + L2;
+    const blend = combined>0 ? (B1*r1 + L2*r2)/combined : 0;
+    const flows = s1.map((x,i)=> x.pay + (s2[i]?s2[i].pay:0));
+    const pv = r => flows.reduce((a,c,i)=> a + c/Math.pow(1+r,i+1), 0);
+    const cfRate = combined>0 ? solveRate(combined, pv)*1200 : 0;
+    const eqRate2 = (function(){ let lo=0, hi=0.05; for(let i=0;i<200;i++){ const mid=(lo+hi)/2; const p = mid ? combined*mid/(1-Math.pow(1+mid,-n3)) : combined/n3; if (p < P1+P2) lo=mid; else hi=mid; } return (lo+hi)/2*1200; })();
+
+    const fmtTerm = m => `${Math.floor(m/12)} yr${m%12?" "+(m%12)+" mo":""}`;
+    if (L2>0 && Math.abs(n2-n1) >= 12){
+      const firstEnds = n1 < n2;
+      msgs.push(["warn", firstEnds
+        ? `The first lien retires in ${fmtTerm(n1)}; the second lien runs ${fmtTerm(n2-n1)} longer. Payment then drops to the second lien alone (${usd(pmt(L2,r2,n2-io2m),2)} P&I).`
+        : `The second lien retires in ${fmtTerm(n2)}; the first lien runs ${fmtTerm(n1-n2)} longer. Payment then drops to the first lien alone (${usd(P1,2)} P&I).`]);
+    }
+
+    // Monthly mortgage insurance
+    const mi1 = B1*mipEff/1200;
+    const pmiApplies = price>0 && L3/price > 0.80;
+    const mi3 = pmiApplies ? L3*pmiPct/1200 : 0;
+    const escrow = tax/12 + ins/12;
+
+    const pitiA = P1 + P2 + mi1 + escrow + hoa;
+    const pitiB = P3 + mi3 + escrow + hoa;
+    const diff = pitiB - pitiA;
+
+    // Totals over the first `months` months of each structure
+    function totals(months){
+      const t={intA:0,intB:0,miA:0,miB:0,prinA:0,prinB:0,payA:0,payB:0};
+      for (let m=0;m<months;m++){
+        const a=s1[m], b=s2[m], c=s3[m];
+        t.intA += a.int + b.int; t.prinA += a.prin + b.prin; t.payA += a.pay + b.pay;
+        const balBefore1 = m===0 ? B1 : s1[m-1].bal;
+        t.miA += balBefore1*mipEff/1200;
+        t.intB += c.int; t.prinB += c.prin; t.payB += c.pay;
+        const balBefore3 = m===0 ? L3 : s3[m-1].bal;
+        if (pmiApplies && price>0 && balBefore3 > 0.78*price) t.miB += balBefore3*pmiPct/1200;
+      }
+      return t;
+    }
+    const {intA,intB,miA,miB,prinA,prinB} = totals(H);
+    const life = totals(T);
+    const balA = s1[H-1].bal + s2[H-1].bal, balB = s3[H-1].bal;
+    const ffAmt = B1*ffPct/100;
+    const feesA = afee + ffAmt + cc2, feesB = cc3;
+    const costA = intA + miA + feesA, costB = intB + miB + feesB;
+    const payoffA = Math.max(n1, L2>0 ? n2 : 0), payoffB = L3>0 ? n3 : 0;
+    const lifeCostA = life.intA + life.miA + feesA, lifeCostB = life.intB + life.miB + feesB;
+
+    // ---- render
+    $("msgs").innerHTML = msgs.map(([k,t])=>`<div class="msg ${k}">${t}</div>`).join("");
+    $("oBlend").textContent = pctFixed(blend,3);
+    $("oBlendD").textContent = "Cash-flow rate " + pctFixed(cfRate,3) + " · payment-equivalent " + t3 + "-yr " + pctFixed(eqRate2,3);
+    $("oPiti").textContent = usd(pitiA);
+    $("oPitiD").textContent = "New loan: " + usd(pitiB) + " at " + pct(r3);
+    $("oDiff").textContent = (diff>=0?"":"+") + usd(Math.abs(diff)) + "/mo";
+    $("oDiffChip").innerHTML = Math.abs(diff) < 1 ? `<span class="chip warn">About even</span>` : diff>0
+      ? `<span class="chip good">▼ Lower · ${usd(diff*12)}/yr</span>`
+      : `<span class="chip bad">▲ Higher · ${usd(-diff*12)}/yr</span>`;
+
+    $("afeeHint").textContent = "Total " + usd(afee) + ": " + usd(afeeUp) + " upfront + " + usd(afeeCtc) + " at Clear to Close";
+
+    // lifetime
+    const hrow = (label,a,b,lowerIsBetter=true,cls="") => {
+      const d=b-a; const good = lowerIsBetter ? d>0 : d<0;
+      const dc = Math.abs(d)<1 ? "" : good ? "pos" : "neg";
+      return `<tr class="${cls}"><td>${label}</td><td>${usd(a)}</td><td>${usd(b)}</td><td class="${dc}">${Math.abs(d)<1?"—":(good?"Saves ":"Costs ")+usd(Math.abs(d))}</td></tr>`;
+    };
+    const dateAfter = m => { const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+m); return d.toLocaleDateString("en-US",{month:"short",year:"numeric"}); };
+    const soon = payoffB - payoffA;
+    $("lfInt").textContent = usd(Math.abs(life.intB-life.intA));
+    $("lfIntD").textContent = life.intB>=life.intA ? "Less interest over the life of the loans" : "More interest over the life of the loans";
+    $("lfSooner").textContent = soon===0 ? "Same" : fmtTerm(Math.abs(soon));
+    $("lfSoonerD").textContent = soon>0 ? "sooner · " + dateAfter(payoffA) + " vs " + dateAfter(payoffB) : soon<0 ? "later · " + dateAfter(payoffA) + " vs " + dateAfter(payoffB) : "Both paid off " + dateAfter(payoffA);
+    $("lfCost").textContent = usd(Math.abs(lifeCostB-lifeCostA));
+    $("lifeSub").textContent = (n1 < n3
+      ? `The assumed loan has ${fmtTerm(n1)} left versus a new ${t3}-year term, so it retires ${fmtTerm(n3-n1)} sooner and carries less total interest.`
+      : `The assumed loan has ${fmtTerm(n1)} left, no shorter than a new ${t3}-year term.`)
+      + (L2>0 && n2>n1 ? ` The second lien runs to ${dateAfter(n2)}, which sets the debt-free date; shorten its term to capture the full benefit.` : "");
+    let lf = "";
+    lf += `<tr><td>Debt-free date</td><td>${dateAfter(payoffA)}</td><td>${dateAfter(payoffB)}</td><td class="${soon>0?"pos":soon<0?"neg":""}">${soon===0?"—":fmtTerm(Math.abs(soon))+(soon>0?" sooner":" later")}</td></tr>`;
+    lf += hrow("Total P&amp;I payments", life.payA, life.payB);
+    lf += hrow("Total interest", life.intA, life.intB);
+    lf += hrow("Mortgage insurance", life.miA, life.miB);
+    lf += hrow("Closing costs &amp; fees", feesA, feesB);
+    lf += hrow("Lifetime borrowing cost", lifeCostA, lifeCostB, true, "total");
+    $("lifeBody").innerHTML = lf;
+
+    // stack
+    const layers = [
+      ["s1", type + " first lien (assumed)", B1, r1, n1],
+      ["s2", "Second lien", L2, r2, L2>0?n2:null],
+      ["s3", "Buyer cash", cash, null, null],
+    ];
+    const tot = Math.max(1, B1+L2+cash);
+    layers.forEach(([k,name,amt,rate],i)=>{
+      const el=$("seg"+(i+1)); el.style.flex = "0 0 " + (amt/tot*100) + "%"; el.hidden = amt<=0;
+      el.dataset.tip = `<span class="sw" style="background:var(--${k})"></span>${name}<br><b>${usd(amt)}</b> · ${price>0?pctFixed(amt/price*100,1):"–"} of price${rate!=null?" · "+pct(rate):""}`;
+      el.setAttribute("aria-label", `${name}: ${usd(amt)}`);
+    });
+    $("stackMax").textContent = usd(price);
+    $("stackSub").textContent = "Equity gap " + usd(gap) + " (" + (price>0?pctFixed(gap/price*100,1):"–") + " of price) · CLTV " + pctFixed(cltv,1) + " · first lien retires in " + fmtTerm(n1);
+    const dash = "<span class='muted'>—</span>";
+    $("stackBody").innerHTML = layers.map(([k,name,amt,rate,term])=>
+      `<tr><td><span class="sw" style="background:var(--${k})"></span>${name}</td><td>${usd(amt)}</td><td>${price>0?pctFixed(amt/price*100,1):"–"}</td><td>${rate!=null?pct(rate):dash}</td><td>${term!=null?fmtTerm(term):dash}</td></tr>`).join("")
+      + `<tr class="total"><td>Purchase price</td><td>${usd(price)}</td><td>100.0%</td><td>${pctFixed(blend,3)}<span class="muted"> blended</span></td><td></td></tr>`;
+
+    // payments
+    const row = (label,a,b,cls="") => `<tr class="${cls}"><td>${label}</td><td>${a===null?"<span class='muted'>—</span>":usd(a,2)}</td><td>${b===null?"<span class='muted'>—</span>":usd(b,2)}</td></tr>`;
+    let pay = "";
+    pay += row("First lien P&amp;I", P1, P3);
+    pay += row(`Second lien ${io2m>0?"interest-only":"P&amp;I"}`, P2, null);
+    pay += row(type==="VA"?"Mortgage insurance":`${type==="FHA"?"FHA MIP":type==="USDA"?"USDA annual fee":"MI"}` + " / PMI", mi1, mi3);
+    pay += row("Property taxes", tax/12, tax/12);
+    pay += row("Homeowners insurance", ins/12, ins/12);
+    if (hoa>0) pay += row("HOA dues", hoa, hoa);
+    pay += row("Total monthly", pitiA, pitiB, "total");
+    $("payBody").innerHTML = pay;
+    if (io2m>0) $("payBody").innerHTML += `<tr><td colspan="3" class="muted" style="font-family:var(--sans);white-space:normal">Second-lien payment steps up to ${usd(P2post,2)} after ${io2} yr of interest-only.</td></tr>`;
+
+    // horizon
+    let hz = "";
+    hz += hrow("Interest paid", intA, intB);
+    hz += hrow("Mortgage insurance", miA, miB);
+    hz += hrow("Closing costs &amp; fees", feesA, feesB);
+    hz += hrow(`Borrowing cost, ${hzY} yr`, costA, costB, true, "total");
+    hz += `<tr><td>Principal paid down</td><td>${usd(prinA)}</td><td>${usd(prinB)}</td><td class="muted">equity, not cost</td></tr>`;
+    hz += `<tr><td>Loan balance at year ${hzY}</td><td>${usd(balA)}</td><td>${usd(balB)}</td><td class="muted"></td></tr>`;
+    $("hzBody").innerHTML = hz;
+
+    // cash
+    const crow = (label,a,b,cls="") => `<tr class="${cls}"><td>${label}</td><td>${a===null?"<span class='muted'>—</span>":usd(a)}</td><td>${b===null?"<span class='muted'>—</span>":usd(b)}</td></tr>`;
+    let c = "";
+    c += crow("Down payment / equity", cash, down);
+    c += crow("Assumption transaction fee", afee, null);
+    c += `<tr class="sub"><td>Upfront</td><td>${usd(afeeUp)}</td><td></td></tr>`;
+    c += `<tr class="sub"><td>Due at servicer's Clear to Close</td><td>${usd(afeeCtc)}</td><td></td></tr>`;
+    if (type==="VA") c += crow(`VA funding fee (${pct(ffPct)})`, ffAmt, null);
+    c += crow("Loan closing costs", cc2, cc3);
+    c += crow("Cash to close", cash+afee+ffAmt+cc2, down+cc3, "total");
+    $("cashBody").innerHTML = c;
+    if (down > gap) $("cashBody").innerHTML += `<tr><td colspan="3" class="muted" style="font-family:var(--sans);white-space:normal">New-loan column uses the full ${usd(down)} as down payment.</td></tr>`;
+  }
+
+  // Prefill from query string (standalone use): ?price=425000&rate=3.25&balance=268000&pi=1258&type=FHA
+  try {
+    const q = new URLSearchParams(location.search); let any=false;
+    for (const [k,id] of Object.entries(QS)){ if (q.has(k)){ $(id).value = q.get(k); any=true; } }
+    if (any){ sampleMode=false; $("sampleBar").hidden=true; }
+  } catch(e){}
+
+  IDS.forEach(id => { const el=$(id); el.addEventListener("input", ()=>{ if(id!=="hz") markEdited(); calc(); }); el.addEventListener("change", calc); });
+  $("clearBtn").addEventListener("click", ()=>{
+    ["price","down","rate1","bal1","pi1","n1y","n1m","afeeUp","afeeCtc","tax","ins","hoa","cc2","cc3"].forEach(id=>$(id).value="");
+    $("ff").value = "0.5"; markEdited(); calc(); $("price").focus();
+  });
+  $("f").addEventListener("submit", e=>e.preventDefault());
+  $("matchBtn").addEventListener("click", ()=>{
+    const m = Math.round(num("n1y"))*12 + Math.round(num("n1m"));
+    $("term2").value = Math.max(1, Math.round(m/12)); markEdited(); calc();
+  });
+
+  // tooltip
+  const tip=$("tip");
+  document.querySelectorAll(".seg").forEach(el=>{
+    const show = (x,y) => { tip.innerHTML = el.dataset.tip; tip.hidden=false; const w=tip.offsetWidth; tip.style.left=Math.min(x+12, innerWidth-w-8)+"px"; tip.style.top=(y+14)+"px"; };
+    el.addEventListener("mousemove", e=>show(e.clientX,e.clientY));
+    el.addEventListener("mouseleave", ()=>tip.hidden=true);
+    el.addEventListener("focus", ()=>{ const r=el.getBoundingClientRect(); show(r.left, r.bottom); });
+    el.addEventListener("blur", ()=>tip.hidden=true);
+  });
+
+  // Embed: light by default; ?theme=dark switches. Reports height to a parent page that listens.
+  try { if (new URLSearchParams(location.search).get("theme")==="dark") document.documentElement.setAttribute("data-theme","dark"); } catch(e){}
+  const postHeight = () => { try { parent.postMessage({type:"bmc-height", height: document.documentElement.scrollHeight}, "*"); } catch(e){} };
+  if (window.ResizeObserver) new ResizeObserver(postHeight).observe(document.body);
+  window.addEventListener("load", postHeight);
+
+  calc();
+})();
+</script>
+</body>
+</html>
